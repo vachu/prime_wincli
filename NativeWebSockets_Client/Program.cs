@@ -16,37 +16,57 @@ namespace NativeWebSockets_Client
 
         static void Main(string[] args)
         {
-            m_ws.Options.KeepAliveInterval = new TimeSpan(0, 0, 30);
-            m_ws.Options.SetBuffer(BUFF_SIZE, BUFF_SIZE);
-
-            // open websocket connection
-            OpenWebSocket(new Uri("ws://localhost:7573")).Wait();
-            if (m_ws.State == WebSocketState.Open)
+            try
             {
-                //Loop:
-                //      Read console input
-                //      If input is "close", "exit" or "quit", then break from this loop
-                //
-                //      Send the input to websocket server
-                //      Receive response from websocket server
-                //      Display response on console
-                Send("List 1000000").Wait();
+                m_ws.Options.KeepAliveInterval = ClientWebSocket.DefaultKeepAliveInterval;
+                m_ws.Options.SetBuffer(BUFF_SIZE, BUFF_SIZE);
 
-                var sb = new StringBuilder();
-                Recv(sb).Wait();
-                Console.WriteLine(sb.ToString());
+                // open websocket connection
+                OpenWebSocket(new Uri("ws://localhost:7573")).Wait();
+                if (m_ws.State == WebSocketState.Open)
+                {
+                    //Loop:
+                    //      Read console input
+                    //      If input is "close", "exit" or "quit", then break from this loop
+                    //
+                    //      Send the input to websocket server
+                    //      Receive response from websocket server
+                    //      Display response on console
+                    Send("List 100000").Wait();
+
+                    var sb = new StringBuilder();
+                    Recv(sb).Wait();
+                    Console.WriteLine(sb.ToString());
+                }
+                // close websocket conection
+                CloseWebSocket().Wait();
             }
-            // close websocket conection
-            CloseWebSocket().Wait();
+            catch (AggregateException agg)
+            {
+                var sb = new StringBuilder();
+                sb.Append(agg.Message);
+                foreach (var e in agg.InnerExceptions)
+                {
+                    sb.Append("\n");
+                    sb.Append(e.Message);
+                    if (e.InnerException != null)
+                    {
+                        sb.Append("\n");
+                        sb.Append(e.InnerException.Message);
+                    }
+                }
+                Console.Error.WriteLine("AGGREGATE EXCEPTION: {0}", sb.ToString());
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("UNKNOWN EXCEPTION: {0}", e.Message);
+            }
+            Console.Error.WriteLine("Client WebSocket State: {0}", m_ws.State.ToString());
         }
 
         static async Task OpenWebSocket(Uri wsUri)
         {
             await m_ws.ConnectAsync(wsUri, m_tokSrc.Token);
-            if (m_ws.State == WebSocketState.Open)
-            {
-                Console.WriteLine("DEBUG: WebSocket connection opened");
-            }
         }
 
         static async Task Send(string data)
@@ -79,7 +99,6 @@ namespace NativeWebSockets_Client
                 sb.Append(recvMsg);
                 Array.Resize(ref recvBytes, BUFF_SIZE);
                 res = await m_ws.ReceiveAsync(recvBuff, m_tokSrc.Token);
-
             }
         }
 
