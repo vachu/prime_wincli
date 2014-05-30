@@ -76,6 +76,33 @@ namespace ClientWebSocketExtensions
             }
         }
 
+        public static IEnumerable<string> RecvNextChunk(this ClientWebSocket ws)
+        {
+            if (!ws.IsOpen())
+                yield break;
+
+            using (var tokSrc = new CancellationTokenSource())
+            {
+                var recvBuff = new ArraySegment<byte>(new byte[BUFF_SIZE]);
+                var res = ws.ReceiveAsync(recvBuff, tokSrc.Token).Result;
+                while (ws.IsOpen() && res != null &&
+                        res.MessageType != WebSocketMessageType.Close &&
+                        res.MessageType == WebSocketMessageType.Text && res.Count > 0)
+                {
+                    var recvBytes = recvBuff.Array;
+                    Array.Resize(ref recvBytes, res.Count);
+                    var recvMsg = Encoding.UTF8.GetString(recvBytes);
+                    if (res.EndOfMessage && String.CompareOrdinal(recvMsg, "==== EOT ====") == 0)
+                    {
+                        yield break;
+                    }
+                    yield return recvMsg;
+                    Array.Resize(ref recvBytes, BUFF_SIZE);
+                    res = ws.ReceiveAsync(recvBuff, tokSrc.Token).Result;
+                }
+            }
+        }
+
         public static bool IsOpen(this ClientWebSocket ws)
         {
             return ws.State == WebSocketState.Open;

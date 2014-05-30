@@ -21,9 +21,17 @@ namespace NativeWebSockets_Client
                     {
                         ws.Send("List 1000000").Wait();
 
-                        var sb = new StringBuilder();
-                        ws.Recv(sb).Wait();
-                        Console.WriteLine(sb.ToString());
+                        //---- Getting the full response ----
+                        //var sb = new StringBuilder();
+                        //ws.Recv(sb).Wait();
+                        //Console.WriteLine(sb.ToString());
+                        //
+                        // ---- Get chunked response through iterator ----
+                        foreach (var res in ws.RecvNextChunk())
+                        {
+                            Console.Write(res);
+                        }
+                        Console.WriteLine();
                     }
                     ws.Close();
                 }
