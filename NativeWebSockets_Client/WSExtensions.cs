@@ -9,7 +9,7 @@ namespace ClientWebSocketExtensions
 {
     public static class CmdLineTextExtensions
     {
-        const int WAIT_TIME = 15 * 1000; // 10 secs
+        const int WAIT_TIME = 15 * 1000; // 15 secs
         const int BUFF_SIZE = 10 * 1000; // 10K buffer
 
         public static bool Open(this ClientWebSocket ws, Uri wsUri)

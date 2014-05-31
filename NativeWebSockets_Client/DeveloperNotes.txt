@@ -1,0 +1,2 @@
+﻿Need to change the WebSocket server app to send a complete response within a message.
+Client apps MUST not depend on contrived strings like "==== EOT ===="
