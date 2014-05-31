@@ -19,19 +19,7 @@ namespace NativeWebSockets_Client
                 {
                     if (ws.Open(new Uri("ws://localhost:7573")))
                     {
-                        ws.Send("List 1000000").Wait();
-
-                        //---- Getting the full response ----
-                        //var sb = new StringBuilder();
-                        //ws.Recv(sb).Wait();
-                        //Console.WriteLine(sb.ToString());
-                        //
-                        // ---- Get chunked response through iterator ----
-                        foreach (var res in ws.RecvNextChunk())
-                        {
-                            Console.Write(res);
-                        }
-                        Console.WriteLine();
+                        CmdRspLoop(ws);
                     }
                     ws.Close();
                 }
@@ -51,6 +39,48 @@ namespace NativeWebSockets_Client
             {
                 Console.Error.WriteLine("UNKNOWN EXCEPTION: {0}", e.Message);
             }
+        }
+
+        static void CmdRspLoop(ClientWebSocket ws)
+        {
+            if (!ws.IsOpen())
+            {
+                Console.Error.WriteLine(
+                    "WARNING: WebSocket not unusable; state = {0}",
+                    ws.State.ToString()
+                );
+                return;
+            }
+
+            for (var cmdStr = "?";
+                 !String.IsNullOrWhiteSpace(cmdStr);
+                 cmdStr = Console.ReadLine() )
+            {
+                cmdStr = cmdStr.Trim().ToUpper();
+                switch (cmdStr)
+                {
+                    case "QUIT":
+                    case "EXIT":
+                    case "CLOSE":
+                        return;
+                }
+
+                ws.Send(cmdStr).Wait();
+                //---- Getting the full response ----
+                var sb = new StringBuilder();
+                ws.Recv(sb).Wait();
+                Console.WriteLine(sb.ToString());
+                
+                // ---- Get chunked response through iterator ----
+                //foreach (var res in ws.RecvNextChunk())
+                //{
+                //    Console.Write(res);
+                //}
+                //Console.WriteLine();
+
+                Console.Write("Enter Command: ");
+            }
+            Console.Error.WriteLine("WARNING: empty command input");
         }
     }
 }
