@@ -32,7 +32,8 @@ namespace ClientWebSocketExtensions
 
             using (var tokSrc = new CancellationTokenSource())
             {
-                ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "", tokSrc.Token).Wait(WAIT_TIME);
+                ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Client Closure", tokSrc.Token).Wait();
+                ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client Closure", tokSrc.Token).Wait();
             }
         }
 
@@ -65,11 +66,11 @@ namespace ClientWebSocketExtensions
                     var recvBytes = recvBuff.Array;
                     Array.Resize(ref recvBytes, res.Count);
                     var recvMsg = Encoding.UTF8.GetString(recvBytes);
-                    if (res.EndOfMessage && String.CompareOrdinal(recvMsg, "==== EOT ====") == 0)
+                    sb.Append(recvMsg);
+                    if (res.EndOfMessage)
                     {
                         break;
                     }
-                    sb.Append(recvMsg);
                     Array.Resize(ref recvBytes, BUFF_SIZE);
                     res = await ws.ReceiveAsync(recvBuff, tokSrc.Token);
                 }
@@ -92,11 +93,12 @@ namespace ClientWebSocketExtensions
                     var recvBytes = recvBuff.Array;
                     Array.Resize(ref recvBytes, res.Count);
                     var recvMsg = Encoding.UTF8.GetString(recvBytes);
-                    if (res.EndOfMessage && String.CompareOrdinal(recvMsg, "==== EOT ====") == 0)
+                    yield return recvMsg;
+
+                    if (res.EndOfMessage)
                     {
                         yield break;
                     }
-                    yield return recvMsg;
                     Array.Resize(ref recvBytes, BUFF_SIZE);
                     res = ws.ReceiveAsync(recvBuff, tokSrc.Token).Result;
                 }
