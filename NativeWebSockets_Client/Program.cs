@@ -17,7 +17,6 @@ namespace NativeWebSockets_Client
                     {
                         CmdRspLoop(ws);
                     }
-                    ws.Close();
                 }
             }
             catch (AggregateException agg)
@@ -42,7 +41,7 @@ namespace NativeWebSockets_Client
             if (!ws.IsOpen())
             {
                 Console.Error.WriteLine(
-                    "WARNING: WebSocket not unusable; state = {0}",
+                    "WARNING: WebSocket unusable; state = {0}",
                     ws.State.ToString()
                 );
                 return;
@@ -52,27 +51,28 @@ namespace NativeWebSockets_Client
                  !String.IsNullOrWhiteSpace(cmdStr);
                  cmdStr = Console.ReadLine() )
             {
-                cmdStr = cmdStr.Trim().ToUpper();
+                cmdStr = cmdStr.Trim().ToLower();
                 switch (cmdStr)
                 {
-                    case "QUIT":
-                    case "EXIT":
-                    case "CLOSE":
+                    case "quit":
+                    case "exit":
+                    case "close":
+                        ws.Send(cmdStr).Wait();
                         return;
                 }
 
                 ws.Send(cmdStr).Wait();
                 //---- Getting the full response ----
-                var sb = new StringBuilder();
-                ws.Recv(sb).Wait();
-                Console.WriteLine(sb.ToString());
+                //var sb = new StringBuilder();
+                //ws.Recv(sb).Wait();
+                //Console.WriteLine(sb.ToString());
                 
                 // ---- Get chunked response through iterator ----
-                //foreach (var res in ws.RecvNextChunk())
-                //{
-                //    Console.Write(res);
-                //}
-                //Console.WriteLine();
+                foreach (var res in ws.RecvNextChunk())
+                {
+                    Console.Write(res);
+                }
+                Console.WriteLine();
 
                 Console.Write("Enter Command: ");
             }

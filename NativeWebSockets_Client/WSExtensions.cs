@@ -32,6 +32,7 @@ namespace ClientWebSocketExtensions
 
             using (var tokSrc = new CancellationTokenSource())
             {
+                Console.Error.WriteLine("Closing client websocket...");
                 ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Client Closure", tokSrc.Token).Wait();
                 ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client Closure", tokSrc.Token).Wait();
             }
